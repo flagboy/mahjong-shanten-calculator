@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>混一色聴牌率計算機</title>
     <style>
         body {
@@ -33,6 +35,121 @@
             background-color: #f9f9f9;
             border-radius: 8px;
             max-width: 900px;
+        }
+        
+        /* モバイル向けスタイル */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+                margin: 0;
+            }
+            .container {
+                padding: 10px;
+                border-radius: 0;
+            }
+            h1 {
+                font-size: 20px;
+                margin-bottom: 10px;
+            }
+            .info {
+                font-size: 12px;
+                padding: 8px;
+                line-height: 1.5;
+            }
+            .all-tiles-container {
+                grid-template-columns: repeat(9, 1fr);
+                grid-template-rows: repeat(7, 1fr);
+                gap: 2px;
+                padding: 8px;
+                margin: 10px auto;
+            }
+            .tile-wrapper {
+                margin: 0;
+            }
+            .tile {
+                width: calc((100vw - 40px) / 9);
+                max-width: 36px;
+                height: calc((100vw - 40px) / 9 * 1.33);
+                max-height: 48px;
+            }
+            .tile:hover {
+                transform: none;
+                box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            }
+            .control-buttons {
+                grid-template-columns: 1fr 1fr;
+                gap: 5px;
+                max-width: 100%;
+                margin-bottom: 10px;
+            }
+            .control-buttons button {
+                font-size: 11px;
+                padding: 8px 10px;
+            }
+            .furo-section {
+                margin: 10px 0;
+                padding: 10px;
+            }
+            .furo-title {
+                font-size: 14px;
+                margin-bottom: 8px;
+            }
+            .furo-groups {
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            .furo-group {
+                width: 100%;
+                max-width: 180px;
+                min-height: 50px;
+                padding: 6px;
+            }
+            .furo-group img {
+                width: 26px;
+                height: 35px;
+            }
+            .furo-placeholder {
+                width: 26px;
+                height: 35px;
+                font-size: 16px;
+            }
+            .furo-clear {
+                width: 18px;
+                height: 18px;
+                font-size: 12px;
+                top: -6px;
+                right: -6px;
+            }
+            button#simulate-btn {
+                font-size: 14px;
+                padding: 10px;
+            }
+            #result {
+                font-size: 14px;
+                padding: 10px;
+                margin-top: 10px;
+            }
+            .example-hand {
+                padding: 6px;
+                gap: 2px;
+            }
+            .example-hand img {
+                width: 24px;
+                height: 32px;
+            }
+            .result-item {
+                font-size: 13px;
+                padding: 8px 0;
+            }
+            .examples-container {
+                padding: 10px;
+                margin-top: 10px;
+            }
+            .example-label {
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
         }
         .furo-section {
             margin: 20px 0;
