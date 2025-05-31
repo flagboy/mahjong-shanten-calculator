@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>混一色聴牌率計算機</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .all-tiles-container {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 6px;
+            justify-content: center;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            max-width: 900px;
+        }
+        .furo-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+        }
+        .furo-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .furo-groups {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .furo-group {
+            display: flex;
+            gap: 4px;
+            padding: 8px;
+            background-color: white;
+            border-radius: 4px;
+            border: 2px dashed #ccc;
+            min-height: 60px;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+        .furo-group.filled {
+            border-style: solid;
+            border-color: #4CAF50;
+        }
+        .furo-group.drag-over {
+            background-color: #e8f5e9;
+            border-color: #4CAF50;
+        }
+        .furo-group.selecting {
+            background-color: #e8f5e9;
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+        .furo-group img {
+            width: 36px;
+            height: 48px;
+        }
+        .furo-placeholder {
+            width: 36px;
+            height: 48px;
+            border: 1px dashed #999;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #999;
+        }
+        .furo-clear {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        .furo-group.filled:hover .furo-clear {
+            opacity: 1;
+        }
+        .furo-clear:hover {
+            background-color: #d32f2f;
+        }
+        .tile-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 2px;
+        }
+        .tile {
+            width: 44px;
+            height: 60px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+        }
+        .tile.dragging {
+            opacity: 0.5;
+            cursor: move;
+        }
+        .tile img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+        .tile.disabled {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+        .tile.disabled:hover {
+            transform: none;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .error {
+            color: #d32f2f;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .result-item:hover {
+            background-color: #f0f0f0;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .shanten-num {
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .percentage {
+            color: #666;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .control-buttons button {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .examples-container {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        .example-hand {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: white;
+            border-radius: 4px;
+            align-items: center;
+        }
+        .example-hand img {
+            width: 36px;
+            height: 48px;
+        }
+        .example-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>混一色聴牌率計算機</h1>
+        
+        <div class="info">
+            自分の手牌や河に見えている牌をクリックしてチェックしてください。
+        </div>
+
+        <div class="control-buttons">
+            <button onclick="checkAllMan()" style="background-color: #ff9800;">萬子を全て除外</button>
+            <button onclick="uncheckAllMan()" style="background-color: #2196f3;">萬子を全て含める</button>
+            <button onclick="checkAllHonors()" style="background-color: #f44336;">字牌を全て除外</button>
+            <button onclick="uncheckAllHonors()" style="background-color: #4CAF50;">字牌を全て含める</button>
+        </div>
+
+        
+        <div class="all-tiles-container" id="all-tiles"></div>
+        
+        <div class="furo-section">
+            <div class="furo-title">副露（ポン・チー）</div>
+            <div class="furo-groups" id="furo-groups">
+                <div class="furo-group" id="furo-1">
+                    <div class="furo-placeholder">+</div>
+                    <div class="furo-placeholder">+</div>
+                    <div class="furo-placeholder">+</div>
+                </div>
+                <div class="furo-group" id="furo-2">
+                    <div class="furo-placeholder">+</div>
+                    <div class="furo-placeholder">+</div>
+                    <div class="furo-placeholder">+</div>
+                </div>
+                <div class="furo-group" id="furo-3">
+                    <div class="furo-placeholder">+</div>
+                    <div class="furo-placeholder">+</div>
+                    <div class="furo-placeholder">+</div>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="simulate()" id="simulate-btn">聴牌率計算</button>
+        
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // 牌の初期化
+        const tiles = [];
+        const allTilesContainer = document.getElementById('all-tiles');
+        
+        // 4×16のグリッドで全ての牌を作成
+        const honorCodes = ['e', 's', 'w', 'n', 'haku', 'h', 'c'];  // 東南西北白發中
+        const honorLetters = ['e', 's', 'w', 'n', 'h', 'f', 'c'];  // アルファベット表現
+        
+        for (let row = 0; row < 4; row++) {
+            // 萬子 1-9
+            for (let num = 1; num <= 9; num++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'tile-wrapper';
+                
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.innerHTML = `<img src="/static/images/p_ms${num}_1.gif" alt="">`;
+                tile.dataset.value = num;
+                tile.dataset.type = 'man';
+                tile.dataset.checked = 'false';
+                tile.onclick = function() {
+                    toggleTile(this);
+                };
+                
+                // ドラッグアンドドロップ機能を追加
+                tile.draggable = true;
+                tile.ondragstart = handleDragStart;
+                tile.ondragend = handleDragEnd;
+                
+                wrapper.appendChild(tile);
+                allTilesContainer.appendChild(wrapper);
+                tiles.push(tile);
+            }
+            
+            // 字牌（アルファベットで表現）
+            for (let i = 0; i < 7; i++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'tile-wrapper';
+                
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.innerHTML = `<img src="/static/images/p_ji_${honorCodes[i]}_1.gif" alt="">`;
+                // 字牌はアルファベットで表現 (e=東, s=南, w=西, n=北, h=白, f=發, c=中)
+                tile.dataset.value = honorLetters[i];
+                tile.dataset.type = 'honor';
+                tile.dataset.checked = 'false';
+                tile.onclick = function() {
+                    toggleTile(this);
+                };
+                
+                // ドラッグアンドドロップ機能を追加
+                tile.draggable = true;
+                tile.ondragstart = handleDragStart;
+                tile.ondragend = handleDragEnd;
+                
+                wrapper.appendChild(tile);
+                allTilesContainer.appendChild(wrapper);
+                tiles.push(tile);
+            }
+        }
+        
+        function toggleTile(tile) {
+            // 副露選択モードの場合
+            if (selectedForFuro) {
+                if (tile.dataset.checked === 'false') {
+                    addTileToFuro(tile);
+                }
+                return;
+            }
+            
+            // 通常のトグル処理
+            if (tile.dataset.checked === 'true') {
+                tile.dataset.checked = 'false';
+                tile.classList.remove('disabled');
+            } else {
+                tile.dataset.checked = 'true';
+                tile.classList.add('disabled');
+            }
+        }
+        
+        function checkAllMan() {
+            tiles.forEach(tile => {
+                if (tile.dataset.type === 'man') {
+                    tile.dataset.checked = 'true';
+                    tile.classList.add('disabled');
+                }
+            });
+        }
+        
+        function uncheckAllMan() {
+            tiles.forEach(tile => {
+                if (tile.dataset.type === 'man') {
+                    tile.dataset.checked = 'false';
+                    tile.classList.remove('disabled');
+                }
+            });
+        }
+        
+        function checkAllHonors() {
+            tiles.forEach(tile => {
+                if (tile.dataset.type === 'honor') {
+                    tile.dataset.checked = 'true';
+                    tile.classList.add('disabled');
+                }
+            });
+        }
+        
+        function uncheckAllHonors() {
+            tiles.forEach(tile => {
+                if (tile.dataset.type === 'honor') {
+                    tile.dataset.checked = 'false';
+                    tile.classList.remove('disabled');
+                }
+            });
+        }
+        
+        
+        function getRemainingTiles() {
+            let remainingMan = '';
+            let remainingHonors = '';
+            
+            tiles.forEach(tile => {
+                if (tile.dataset.checked === 'false') {
+                    if (tile.dataset.type === 'man') {
+                        remainingMan += tile.dataset.value;
+                    } else {
+                        remainingHonors += tile.dataset.value;
+                    }
+                }
+            });
+            
+            return { man: remainingMan, honors: remainingHonors };
+        }
+        
+        async function simulate() {
+            const { man, honors } = getRemainingTiles();
+            const iterations = 10000;  // 固定値
+            const resultDiv = document.getElementById('result');
+            const button = document.getElementById('simulate-btn');
+            
+            // 副露を考慮した必要牌数の計算
+            let furoCount = 0;
+            const melds = [];
+            for (let i = 1; i <= 3; i++) {
+                if (furoData[i].length === 3) {
+                    furoCount++;
+                    melds.push(furoData[i]);
+                }
+            }
+            const requiredTiles = 13 - (furoCount * 3);
+            
+            if (man.length + honors.length < requiredTiles) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `<div class="error">エラー: ${requiredTiles}枚以上の牌が必要です（副露: ${furoCount}組）</div>`;
+                return;
+            }
+            
+            // ボタンを無効化
+            button.disabled = true;
+            button.textContent = '計算中...';
+            
+            // 結果をクリア
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch('/simulate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        remaining_man: man,
+                        remaining_honors: honors,
+                        iterations: iterations,
+                        melds: melds
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    resultDiv.innerHTML = `<div class="error">エラー: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">通信エラーが発生しました: ${error.message}</div>`;
+            } finally {
+                // ボタンを有効化
+                button.disabled = false;
+                button.textContent = '聴牌率計算';
+            }
+        }
+        
+        let globalExamples = {};
+        
+        function displayResults(data) {
+            const resultDiv = document.getElementById('result');
+            const results = data.result;
+            const iterations = data.iterations;
+            globalExamples = data.examples || {};
+            
+            let html = '';
+            
+            // シャンテン数でソート
+            const sortedResults = Object.entries(results).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+            
+            sortedResults.forEach(([shanten, count]) => {
+                const percentage = ((count / iterations) * 100).toFixed(2);
+                const shantenText = shanten === '-1' ? 'アガリ' : shanten === '0' ? 'テンパイ' : `${shanten}シャンテン`;
+                html += `
+                    <div class="result-item" onclick="showExamples('${shanten}')">
+                        <span class="shanten-num">${shantenText}</span>
+                        <span class="percentage">${percentage}%</span>
+                    </div>
+                `;
+            });
+            
+            html += '<div id="examples-display" style="display:none;"></div>';
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        function showExamples(shanten) {
+            const examplesDiv = document.getElementById('examples-display');
+            const examples = globalExamples[shanten];
+            
+            if (!examples || examples.length === 0) {
+                return;
+            }
+            
+            const shantenText = shanten === '-1' ? 'アガリ' : shanten === '0' ? 'テンパイ' : `${shanten}シャンテン`;
+            
+            let html = `<div class="examples-container">
+                <div class="example-label">${shantenText}の例:</div>`;
+            
+            examples.forEach((example, index) => {
+                html += '<div class="example-hand">';
+                
+                // 手牌を表示
+                example.hand.forEach(tile => {
+                    html += `<img src="${tile.image}" alt="">`;
+                });
+                
+                // 副露を後に表示
+                if (example.melds && example.melds.length > 0) {
+                    html += '<span style="margin: 0 10px;"></span>';
+                    example.melds.forEach(meld => {
+                        html += '<span style="margin-right: 8px; border: 1px solid #4CAF50; padding: 2px; border-radius: 4px;">';
+                        meld.forEach(tile => {
+                            html += `<img src="${tile.image}" alt="">`;
+                        });
+                        html += '</span>';
+                    });
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            examplesDiv.innerHTML = html;
+            examplesDiv.style.display = 'block';
+        }
+        
+        // 副露（メルド）関連の変数と関数
+        let selectedForFuro = null;  // 現在選択中の副露グループ
+        let furoData = {
+            1: [],
+            2: [],
+            3: []
+        };
+        let autoExcludedTiles = new Set();  // 副露で自動除外された牌を追跡
+        
+        function clearFuroGroup(groupNum) {
+            // 副露で除外した牌を元に戻す
+            if (furoData[groupNum].length === 3) {
+                restoreFuroTiles(groupNum);
+            }
+            furoData[groupNum] = [];
+            updateFuroDisplay(groupNum);
+        }
+        
+        function restoreFuroTiles(groupNum) {
+            const tiles = furoData[groupNum];
+            
+            tiles.forEach(furoTile => {
+                // 同じ種類と値を持つ全ての牌を探す
+                const matchingTiles = Array.from(document.querySelectorAll('.tile')).filter(tile => {
+                    return tile.dataset.type === furoTile.type && 
+                           tile.dataset.value === furoTile.value &&
+                           tile.dataset.checked === 'true' &&
+                           autoExcludedTiles.has(tile);  // 自動除外された牌のみ
+                });
+                
+                // 自動除外された牌を復活
+                if (matchingTiles.length > 0) {
+                    const tileToRestore = matchingTiles[0];
+                    tileToRestore.dataset.checked = 'false';
+                    tileToRestore.classList.remove('disabled');
+                    autoExcludedTiles.delete(tileToRestore);
+                }
+            });
+        }
+        
+        function updateFuroDisplay(groupNum) {
+            const group = document.getElementById(`furo-${groupNum}`);
+            const tiles = furoData[groupNum];
+            
+            // グループの内容をクリア（×ボタン以外）
+            const existingClear = group.querySelector('.furo-clear');
+            group.innerHTML = '';
+            
+            // グループ全体のクリックイベントを設定
+            if (tiles.length < 3) {
+                group.onclick = (e) => {
+                    // クリアボタンやimg要素でない場合のみ選択
+                    if (!e.target.classList.contains('furo-clear') && e.target.tagName !== 'IMG') {
+                        selectFuroGroup(groupNum);
+                    }
+                };
+            } else {
+                group.onclick = null;
+            }
+            
+            if (tiles.length === 0) {
+                // 空の場合はプレースホルダーを表示
+                for (let i = 0; i < 3; i++) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'furo-placeholder';
+                    placeholder.textContent = '+';
+                    group.appendChild(placeholder);
+                }
+                group.classList.remove('filled');
+            } else {
+                // 牌を表示
+                tiles.forEach((tile, index) => {
+                    const img = document.createElement('img');
+                    img.src = tile.image;
+                    img.alt = '';
+                    img.onclick = (e) => {
+                        e.stopPropagation(); // グループ全体のクリックを防ぐ
+                        removeTileFromFuro(groupNum, index);
+                    };
+                    group.appendChild(img);
+                });
+                
+                // 3枚未満の場合はプレースホルダーを追加
+                for (let i = tiles.length; i < 3; i++) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'furo-placeholder';
+                    placeholder.textContent = '+';
+                    group.appendChild(placeholder);
+                }
+                
+                if (tiles.length === 3) {
+                    group.classList.add('filled');
+                    // ×ボタンを追加
+                    const clearBtn = document.createElement('div');
+                    clearBtn.className = 'furo-clear';
+                    clearBtn.textContent = '×';
+                    clearBtn.onclick = (e) => {
+                        e.stopPropagation(); // グループ全体のクリックを防ぐ
+                        clearFuroGroup(groupNum);
+                    };
+                    group.appendChild(clearBtn);
+                } else {
+                    group.classList.remove('filled');
+                }
+            }
+        }
+        
+        function selectFuroGroup(groupNum) {
+            if (furoData[groupNum].length >= 3) {
+                return; // 既に3枚ある場合は選択不可
+            }
+            
+            // 既に同じグループが選択されている場合は解除
+            if (selectedForFuro === groupNum) {
+                cancelFuroSelection();
+                return;
+            }
+            
+            selectedForFuro = groupNum;
+            
+            // 全てのグループからselectingクラスを削除
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`furo-${i}`).classList.remove('selecting');
+            }
+            
+            // 選択中のグループにselectingクラスを追加
+            document.getElementById(`furo-${groupNum}`).classList.add('selecting');
+            
+            // 全ての牌に選択可能な視覚的フィードバックを追加
+            tiles.forEach(tile => {
+                if (tile.dataset.checked === 'false') {
+                    tile.style.border = '2px solid #4CAF50';
+                    tile.style.boxShadow = '0 0 5px rgba(76, 175, 80, 0.5)';
+                }
+            });
+            
+            // 説明文を表示
+            const infoDiv = document.querySelector('.info');
+            infoDiv.textContent = `副露${groupNum}に追加する牌をクリックしてください（再度クリックで解除）`;
+            infoDiv.style.backgroundColor = '#c8e6c9';
+        }
+        
+        function removeTileFromFuro(groupNum, index) {
+            // 削除する前に3枚揃っていた場合は、除外を解除
+            if (furoData[groupNum].length === 3) {
+                restoreFuroTiles(groupNum);
+            }
+            
+            furoData[groupNum].splice(index, 1);
+            updateFuroDisplay(groupNum);
+            
+            // 再度自動除外（残っている牌のみ）
+            if (furoData[groupNum].length > 0) {
+                furoData[groupNum].forEach(tile => {
+                    const matchingTiles = Array.from(document.querySelectorAll('.tile')).filter(t => {
+                        return t.dataset.type === tile.type && 
+                               t.dataset.value === tile.value &&
+                               t.dataset.checked === 'false';
+                    });
+                    if (matchingTiles.length > 0) {
+                        matchingTiles[0].dataset.checked = 'true';
+                        matchingTiles[0].classList.add('disabled');
+                    }
+                });
+            }
+        }
+        
+        function addTileToFuro(tile) {
+            if (!selectedForFuro || furoData[selectedForFuro].length >= 3) {
+                return false;
+            }
+            
+            // 牌の情報を追加
+            const tileInfo = {
+                type: tile.dataset.type,
+                value: tile.dataset.value,
+                image: tile.querySelector('img').src
+            };
+            
+            furoData[selectedForFuro].push(tileInfo);
+            updateFuroDisplay(selectedForFuro);
+            
+            // 3枚になったら検証と選択モードを解除
+            if (furoData[selectedForFuro].length >= 3) {
+                if (!validateFuro(selectedForFuro)) {
+                    // 無効な組み合わせの場合はクリア
+                    furoData[selectedForFuro] = [];
+                    updateFuroDisplay(selectedForFuro);
+                    alert('有効なポン（同じ牌3枚）またはチー（連続する数牌3枚）を選択してください');
+                } else {
+                    // 有効な場合は牌を自動的に除外
+                    markFuroTilesAsExcluded(selectedForFuro);
+                }
+                cancelFuroSelection();
+            }
+            
+            return true;
+        }
+        
+        function validateFuro(groupNum) {
+            const tiles = furoData[groupNum];
+            if (tiles.length !== 3) return false;
+            
+            // 字牌が含まれている場合はポンのみ可能
+            if (tiles.some(t => t.type === 'honor')) {
+                // 全て同じ字牌かチェック
+                return tiles.every(t => t.type === 'honor' && t.value === tiles[0].value);
+            }
+            
+            // 数牌の場合
+            const values = tiles.map(t => parseInt(t.value)).sort((a, b) => a - b);
+            
+            // ポンのチェック（同じ数字3つ）
+            if (values[0] === values[1] && values[1] === values[2]) {
+                return true;
+            }
+            
+            // チーのチェック（連続する3つ）
+            if (values[1] === values[0] + 1 && values[2] === values[1] + 1) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function markFuroTilesAsExcluded(groupNum) {
+            const tiles = furoData[groupNum];
+            
+            tiles.forEach(furoTile => {
+                // 同じ種類と値を持つ全ての牌を探す
+                const matchingTiles = Array.from(document.querySelectorAll('.tile')).filter(tile => {
+                    return tile.dataset.type === furoTile.type && 
+                           tile.dataset.value === furoTile.value &&
+                           tile.dataset.checked === 'false';
+                });
+                
+                // 最初の未使用牌を除外
+                if (matchingTiles.length > 0) {
+                    const tile = matchingTiles[0];
+                    tile.dataset.checked = 'true';
+                    tile.classList.add('disabled');
+                    // 自動除外された牌として記録
+                    autoExcludedTiles.add(tile);
+                }
+            });
+        }
+        
+        function cancelFuroSelection() {
+            selectedForFuro = null;
+            
+            // 全てのグループからselectingクラスを削除
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`furo-${i}`).classList.remove('selecting');
+            }
+            
+            // 視覚的フィードバックを削除
+            tiles.forEach(tile => {
+                tile.style.border = '';
+                tile.style.boxShadow = '';
+            });
+            
+            // 説明文を元に戻す
+            const infoDiv = document.querySelector('.info');
+            infoDiv.textContent = '自分の手牌や河に見えている牌をクリックしてチェックしてください。';
+            infoDiv.style.backgroundColor = '#e3f2fd';
+        }
+        
+        // ESCキーで副露選択をキャンセル
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && selectedForFuro) {
+                cancelFuroSelection();
+            }
+        });
+        
+        // ドラッグアンドドロップ関連の関数
+        let draggedTile = null;
+        
+        function handleDragStart(e) {
+            if (this.dataset.checked === 'true') {
+                e.preventDefault();
+                return;
+            }
+            
+            draggedTile = this;
+            this.classList.add('dragging');
+            
+            // ドラッグデータを設定
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                type: this.dataset.type,
+                value: this.dataset.value,
+                image: this.querySelector('img').src
+            }));
+        }
+        
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedTile = null;
+        }
+        
+        // 副露グループにドロップゾーンを設定
+        function setupFuroDropZones() {
+            for (let i = 1; i <= 3; i++) {
+                (function(groupNum) {
+                    const group = document.getElementById(`furo-${groupNum}`);
+                    
+                    // 初期状態でもクリックイベントを設定
+                    group.onclick = function(e) {
+                        if (furoData[groupNum].length < 3 && !e.target.classList.contains('furo-clear') && e.target.tagName !== 'IMG') {
+                            selectFuroGroup(groupNum);
+                        }
+                    };
+                    
+                    group.ondragover = function(e) {
+                        e.preventDefault();
+                        if (furoData[groupNum].length < 3) {
+                            this.classList.add('drag-over');
+                        }
+                    };
+                    
+                    group.ondragleave = function(e) {
+                        this.classList.remove('drag-over');
+                    };
+                    
+                    group.ondrop = function(e) {
+                        e.preventDefault();
+                        this.classList.remove('drag-over');
+                        
+                        if (furoData[groupNum].length >= 3) return;
+                        
+                        // ドロップされた牌を副露に追加
+                        if (draggedTile && draggedTile.dataset.checked === 'false') {
+                            const tileInfo = {
+                                type: draggedTile.dataset.type,
+                                value: draggedTile.dataset.value,
+                                image: draggedTile.querySelector('img').src
+                            };
+                            
+                            furoData[groupNum].push(tileInfo);
+                            updateFuroDisplay(groupNum);
+                            
+                            // 3枚になったら検証
+                            if (furoData[groupNum].length === 3) {
+                                if (!validateFuro(groupNum)) {
+                                    // 無効な組み合わせの場合はクリア
+                                    furoData[groupNum] = [];
+                                    updateFuroDisplay(groupNum);
+                                    alert('有効なポン（同じ牌3枚）またはチー（連続する数牌3枚）を選択してください');
+                                } else {
+                                    // 有効な場合は牌を自動的に除外
+                                    markFuroTilesAsExcluded(groupNum);
+                                }
+                            }
+                        }
+                    };
+                })(i);
+            }
+        }
+        
+        // ドロップゾーンを初期化
+        setupFuroDropZones();
+        
+    </script>
+</body>
+</html>
