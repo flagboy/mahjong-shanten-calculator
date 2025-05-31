@@ -133,10 +133,28 @@
             .example-hand {
                 padding: 6px;
                 gap: 2px;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
             }
             .example-hand img {
                 width: 24px;
                 height: 32px;
+            }
+            .example-hand .hand-tiles {
+                display: inline-flex;
+                flex-wrap: wrap;
+                gap: 1px;
+            }
+            .example-hand .meld-separator {
+                width: 5px;
+                margin: 0 3px;
+            }
+            .example-hand .meld-group {
+                display: inline-flex !important;
+                padding: 1px !important;
+                margin: 1px !important;
+                gap: 1px;
             }
             .result-item {
                 font-size: 13px;
@@ -371,6 +389,7 @@
         }
         .example-hand {
             display: flex;
+            flex-wrap: wrap;
             gap: 4px;
             margin-bottom: 10px;
             padding: 8px;
@@ -381,6 +400,10 @@
         .example-hand img {
             width: 36px;
             height: 48px;
+        }
+        .example-hand .meld-separator {
+            margin: 0 8px;
+            width: 10px;
         }
         .example-label {
             font-size: 14px;
@@ -743,15 +766,17 @@
                 html += '<div class="example-hand">';
                 
                 // 手牌を表示
+                html += '<span class="hand-tiles">';
                 example.hand.forEach(tile => {
                     html += `<img src="${tile.image}" alt="">`;
                 });
+                html += '</span>';
                 
                 // 副露を後に表示
                 if (example.melds && example.melds.length > 0) {
-                    html += '<span style="margin: 0 10px;"></span>';
-                    example.melds.forEach(meld => {
-                        html += '<span style="margin-right: 8px; border: 1px solid #4CAF50; padding: 2px; border-radius: 4px;">';
+                    html += '<span class="meld-separator"></span>';
+                    example.melds.forEach((meld, meldIndex) => {
+                        html += '<span class="meld-group" style="display: inline-flex; margin: 2px; border: 1px solid #4CAF50; padding: 2px; border-radius: 4px;">';
                         meld.forEach(tile => {
                             html += `<img src="${tile.image}" alt="">`;
                         });
