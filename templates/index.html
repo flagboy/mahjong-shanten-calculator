@@ -58,7 +58,7 @@
             }
             .all-tiles-container {
                 grid-template-columns: repeat(9, 1fr);
-                grid-template-rows: repeat(7, 1fr);
+                grid-template-rows: repeat(8, 1fr);
                 gap: 2px;
                 padding: 8px;
                 margin: 10px auto;
@@ -439,60 +439,127 @@
         const tiles = [];
         const allTilesContainer = document.getElementById('all-tiles');
         
-        // 4×16のグリッドで全ての牌を作成
+        // モバイルかどうかを判定
+        const isMobile = window.innerWidth <= 768;
+        
         const honorCodes = ['e', 's', 'w', 'n', 'haku', 'h', 'c'];  // 東南西北白發中
         const honorLetters = ['e', 's', 'w', 'n', 'h', 'f', 'c'];  // アルファベット表現
         
-        for (let row = 0; row < 4; row++) {
-            // 萬子 1-9
-            for (let num = 1; num <= 9; num++) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'tile-wrapper';
-                
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.innerHTML = `<img src="/static/images/p_ms${num}_1.gif" alt="">`;
-                tile.dataset.value = num;
-                tile.dataset.type = 'man';
-                tile.dataset.checked = 'false';
-                tile.onclick = function() {
-                    toggleTile(this);
-                };
-                
-                // ドラッグアンドドロップ機能を追加
-                tile.draggable = true;
-                tile.ondragstart = handleDragStart;
-                tile.ondragend = handleDragEnd;
-                
-                wrapper.appendChild(tile);
-                allTilesContainer.appendChild(wrapper);
-                tiles.push(tile);
+        if (isMobile) {
+            // モバイル用: 9×8グリッド（萬子1-9×4行、字牌7種×4行）
+            // 萬子 4行
+            for (let row = 0; row < 4; row++) {
+                for (let num = 1; num <= 9; num++) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'tile-wrapper';
+                    
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.innerHTML = `<img src="/static/images/p_ms${num}_1.gif" alt="">`;
+                    tile.dataset.value = num;
+                    tile.dataset.type = 'man';
+                    tile.dataset.checked = 'false';
+                    tile.onclick = function() {
+                        toggleTile(this);
+                    };
+                    
+                    // ドラッグアンドドロップ機能を追加
+                    tile.draggable = true;
+                    tile.ondragstart = handleDragStart;
+                    tile.ondragend = handleDragEnd;
+                    
+                    wrapper.appendChild(tile);
+                    allTilesContainer.appendChild(wrapper);
+                    tiles.push(tile);
+                }
             }
             
-            // 字牌（アルファベットで表現）
-            for (let i = 0; i < 7; i++) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'tile-wrapper';
+            // 字牌 4行
+            for (let row = 0; row < 4; row++) {
+                for (let i = 0; i < 7; i++) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'tile-wrapper';
+                    
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.innerHTML = `<img src="/static/images/p_ji_${honorCodes[i]}_1.gif" alt="">`;
+                    tile.dataset.value = honorLetters[i];
+                    tile.dataset.type = 'honor';
+                    tile.dataset.checked = 'false';
+                    tile.onclick = function() {
+                        toggleTile(this);
+                    };
+                    
+                    // ドラッグアンドドロップ機能を追加
+                    tile.draggable = true;
+                    tile.ondragstart = handleDragStart;
+                    tile.ondragend = handleDragEnd;
+                    
+                    wrapper.appendChild(tile);
+                    allTilesContainer.appendChild(wrapper);
+                    tiles.push(tile);
+                }
                 
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.innerHTML = `<img src="/static/images/p_ji_${honorCodes[i]}_1.gif" alt="">`;
-                // 字牌はアルファベットで表現 (e=東, s=南, w=西, n=北, h=白, f=發, c=中)
-                tile.dataset.value = honorLetters[i];
-                tile.dataset.type = 'honor';
-                tile.dataset.checked = 'false';
-                tile.onclick = function() {
-                    toggleTile(this);
-                };
+                // 字牌は7種なので、各行の最後に2つ空きスペースを追加
+                for (let j = 0; j < 2; j++) {
+                    const emptyWrapper = document.createElement('div');
+                    emptyWrapper.className = 'tile-wrapper';
+                    allTilesContainer.appendChild(emptyWrapper);
+                }
+            }
+        } else {
+            // デスクトップ用: 4×16グリッド
+            for (let row = 0; row < 4; row++) {
+                // 萬子 1-9
+                for (let num = 1; num <= 9; num++) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'tile-wrapper';
+                    
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.innerHTML = `<img src="/static/images/p_ms${num}_1.gif" alt="">`;
+                    tile.dataset.value = num;
+                    tile.dataset.type = 'man';
+                    tile.dataset.checked = 'false';
+                    tile.onclick = function() {
+                        toggleTile(this);
+                    };
+                    
+                    // ドラッグアンドドロップ機能を追加
+                    tile.draggable = true;
+                    tile.ondragstart = handleDragStart;
+                    tile.ondragend = handleDragEnd;
+                    
+                    wrapper.appendChild(tile);
+                    allTilesContainer.appendChild(wrapper);
+                    tiles.push(tile);
+                }
                 
-                // ドラッグアンドドロップ機能を追加
-                tile.draggable = true;
-                tile.ondragstart = handleDragStart;
-                tile.ondragend = handleDragEnd;
-                
-                wrapper.appendChild(tile);
-                allTilesContainer.appendChild(wrapper);
-                tiles.push(tile);
+                // 字牌（アルファベットで表現）
+                for (let i = 0; i < 7; i++) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'tile-wrapper';
+                    
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.innerHTML = `<img src="/static/images/p_ji_${honorCodes[i]}_1.gif" alt="">`;
+                    // 字牌はアルファベットで表現 (e=東, s=南, w=西, n=北, h=白, f=發, c=中)
+                    tile.dataset.value = honorLetters[i];
+                    tile.dataset.type = 'honor';
+                    tile.dataset.checked = 'false';
+                    tile.onclick = function() {
+                        toggleTile(this);
+                    };
+                    
+                    // ドラッグアンドドロップ機能を追加
+                    tile.draggable = true;
+                    tile.ondragstart = handleDragStart;
+                    tile.ondragend = handleDragEnd;
+                    
+                    wrapper.appendChild(tile);
+                    allTilesContainer.appendChild(wrapper);
+                    tiles.push(tile);
+                }
             }
         }
         
