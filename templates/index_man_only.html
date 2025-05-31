@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻雀シャンテン数シミュレーター</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .tiles-container {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            justify-content: center;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            max-width: 500px;
+        }
+        .tile-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 2px;
+        }
+        .tile {
+            width: 44px;
+            height: 60px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+        }
+        .tile img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+        .tile.disabled {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+        .tile.disabled:hover {
+            transform: none;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        .tile-checkbox {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .error {
+            color: #d32f2f;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .shanten-num {
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .percentage {
+            color: #666;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .control-buttons button {
+            flex: 1;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .remaining-count {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>麻雀シャンテン数シミュレーター</h1>
+        
+        <div class="info">
+            使われない牌（河に捨てられた牌）をクリックしてチェックしてください。<br>
+            チェックされた牌は計算から除外されます。
+        </div>
+
+        <div class="control-buttons">
+            <button onclick="checkAll()" style="background-color: #ff9800;">全て除外</button>
+            <button onclick="uncheckAll()" style="background-color: #2196f3;">全て含める</button>
+        </div>
+
+        <div class="remaining-count" id="remaining-count">残り牌: 36枚</div>
+        
+        <div class="tiles-container" id="tiles-container"></div>
+        
+        <div class="input-group">
+            <label for="iterations">シミュレーション回数:</label>
+            <input 
+                type="number" 
+                id="iterations" 
+                value="10000" 
+                min="1000" 
+                max="1000000"
+            />
+        </div>
+        
+        <button onclick="simulate()" id="simulate-btn">シミュレーション実行</button>
+        
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // 牌の初期化
+        const tiles = [];
+        const tilesContainer = document.getElementById('tiles-container');
+        
+        // 4×9のグリッドで牌を作成（4枚ずつ横に並べる）
+        for (let row = 0; row < 4; row++) {
+            for (let num = 1; num <= 9; num++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'tile-wrapper';
+                
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.innerHTML = `<img src="/static/images/p_ms${num}_1.gif" alt="${num}萬">`;
+                tile.dataset.value = num;
+                tile.dataset.checked = 'false';
+                tile.onclick = function() {
+                    toggleTile(this);
+                };
+                
+                wrapper.appendChild(tile);
+                tilesContainer.appendChild(wrapper);
+                tiles.push(tile);
+            }
+        }
+        
+        function toggleTile(tile) {
+            if (tile.dataset.checked === 'true') {
+                tile.dataset.checked = 'false';
+                tile.classList.remove('disabled');
+            } else {
+                tile.dataset.checked = 'true';
+                tile.classList.add('disabled');
+            }
+            updateRemainingCount();
+        }
+        
+        function checkAll() {
+            tiles.forEach(tile => {
+                tile.dataset.checked = 'true';
+                tile.classList.add('disabled');
+            });
+            updateRemainingCount();
+        }
+        
+        function uncheckAll() {
+            tiles.forEach(tile => {
+                tile.dataset.checked = 'false';
+                tile.classList.remove('disabled');
+            });
+            updateRemainingCount();
+        }
+        
+        function updateRemainingCount() {
+            const remaining = tiles.filter(tile => tile.dataset.checked === 'false').length;
+            document.getElementById('remaining-count').textContent = `残り牌: ${remaining}枚`;
+        }
+        
+        function getRemainingTiles() {
+            let remaining = '';
+            tiles.forEach(tile => {
+                if (tile.dataset.checked === 'false') {
+                    remaining += tile.dataset.value;
+                }
+            });
+            return remaining;
+        }
+        
+        async function simulate() {
+            const remainingTiles = getRemainingTiles();
+            const iterations = parseInt(document.getElementById('iterations').value);
+            const resultDiv = document.getElementById('result');
+            const button = document.getElementById('simulate-btn');
+            
+            if (remainingTiles.length < 13) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<div class="error">エラー: 13枚以上の牌が必要です</div>';
+                return;
+            }
+            
+            // ボタンを無効化
+            button.disabled = true;
+            button.textContent = '実行中...';
+            
+            // 結果をクリア
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">シミュレーション中...</div>';
+            
+            try {
+                const response = await fetch('/simulate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        remaining_tiles: remainingTiles,
+                        iterations: iterations
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    resultDiv.innerHTML = `<div class="error">エラー: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">通信エラーが発生しました: ${error.message}</div>`;
+            } finally {
+                // ボタンを有効化
+                button.disabled = false;
+                button.textContent = 'シミュレーション実行';
+            }
+        }
+        
+        function displayResults(data) {
+            const resultDiv = document.getElementById('result');
+            const results = data.result;
+            const iterations = data.iterations;
+            
+            let html = '<h2>シミュレーション結果</h2>';
+            html += `<p>残り牌: ${data.total_tiles}枚 / 実行回数: ${iterations.toLocaleString()}回</p>`;
+            
+            // シャンテン数でソート
+            const sortedResults = Object.entries(results).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+            
+            sortedResults.forEach(([shanten, count]) => {
+                const percentage = ((count / iterations) * 100).toFixed(2);
+                const shantenText = shanten === '-1' ? 'アガリ' : shanten === '0' ? 'テンパイ' : `${shanten}シャンテン`;
+                html += `
+                    <div class="result-item">
+                        <span class="shanten-num">${shantenText}</span>
+                        <span>${count.toLocaleString()}回 <span class="percentage">(${percentage}%)</span></span>
+                    </div>
+                `;
+            });
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Enterキーでシミュレーション実行
+        document.getElementById('iterations').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                simulate();
+            }
+        });
+    </script>
+</body>
+</html>
