@@ -3,7 +3,7 @@ name = "honitsu-tenpai-calculator"
 version = "0.1.0"
 description = "混一色聴牌率計算機"
 # readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 dependencies = [
     "flask>=3.0.0",
     "mahjong>=1.2.1",
